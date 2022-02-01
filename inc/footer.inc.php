@@ -1,7 +1,7 @@
 </main>
 
 <footer class="mt-5 text-center">
-    <p>&copy; Aziz 2022</p>
+    <p>&copy; Makan 2022</p>
 </footer>
 
 

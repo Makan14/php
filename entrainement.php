@@ -1,5 +1,18 @@
 <?php
 
+ //-----------------------------------------------------------
+//session_start permet de créer 1 session ou de la réouvrir 
+//7 declaration doit se faire obligatoirement tt en haut du fichier avnt le DOCTYPE. Sinn cela génèrera 1 bug  
+session_start();
+
+//session_unset est 1 autre fonction prédéfinie liée aux sessions
+//elle permet de vider 1 fichier session d une ou ttes ls informations qui y snt contenues
+session_unset();
+
+//celle ci permet de detruire le fichier dns sn ensemble ps que ls informations qu il contient 
+session_destroy();
+//---------------------------------------------------------------
+
 require_once('inc/header.inc.php');
 
 // Chapitre 1 Affichage
@@ -813,23 +826,58 @@ echo "<button class='btn'><a href='page_get.php?produit=Gateau&variete=chocolat&
   <label for="annee" class="form-label">Année de naissance</label>
   <select class="form-select" id="annee" name="annee">
   <?php
-    for ($i=date('Y'); $i >=date('Y') - 100; $i--) { 
-        echo "<option>$i</option>";
-    }
+        for ($i=date('Y'); $i >=date('Y') - 100; $i--) { 
+            echo "<option>$i</option>";
+        }
     ?>
   </select>
 
   <button type="submit" class="btn btn-primary">Envoyer</button>
 </form>
 
-<button class='btn btn-primary'><a class='text-light' href='lecture.php' target='_blank'>Aller vers la page de lecture des données</a></button>
+<div>
+    <button class='btn btn-primary my-2'><a class='text-light' href='lecture.php' target='_blank'>Aller vers la page de lecture des données</a></button>
+</div>
 
-<button class='btn btn-primary'><a class='text-light' href='pageCookie.php' target='_blank'>Aller vers la page ds cookies</a></button>
+<div>
+    <button class='btn btn-primary my-2'><a class='text-light' href='pageCookie.php' target='_blank'>Aller vers la page ds cookies</a></button>
+</div>
+
+
+<!-------------------------------------- CHAP 15 LES SESSIONS  -->
+<!-- pr la declaration de session_start session_unset et session_destroy voir tt en haut de ce fichier car session_start doit être positionné avant le doctype -->
+<div>
+    <button class='btn btn-primary my-2'><a class='text-light' href='pageSession.php' target='_blank'>Aller vers la page des sessions</a></button>
+</div>
+
+<?php 
+
+// -------------------------------------CHAP 16 PDO et requetes SQL
+// PDO, PHP Data Object et 1 surcouche d abstraction liée a PHP elle permet l interaction avc la BDD.
+
+//connexion à la base de données  
+//pr me relier à ma BDD je dois au préalable crée 1 objet de ma classe PDP pr pouvoir bénéficier de ses propriétés/attributs et méthodes prédéfinies
+//en local cst à dire que mn projet n est pls again en ligne, pr me connecter à ma BDD je vais devoir générer 1 syntaxe assez figée, rigide, normée.
+//en local le host sera = à localhost, le dbuser égal à root et le dbpassword(mot de passe) = à '' (simple quotes vides, sans rien à l intérieur mm ps 1 space) seul dbname (après localhost) pourra varier. Il doit accueillir le nom de votre BDD (qui pourra dnc changer selon celle vers laquelle vs voulez vs connecter) 
+$pdo = new PDO('mysql:host=localhost;dbname=voiture', 'root', '', array(
+    PDO::ATTR_ERRMODE => PDO::ERRMODE_WARNING,
+    //je décide du type d encodage ds caractères vers la BDD (similaire a celui dns le DOCTYPE dns header.inc.php)
+    //le type d encodage UTF8 est celui qui me permet de lire ls caractères spéciaux ds diff alphabets
+    PDO::MYSQL_ATTR_INIT_COMMAND => 'SET NAMES utf8',
+));
+
+//get_class_methods me permet de visualiser ls diffs méthodes prédéfinies de ma class PDO, qui seront utilisables, pretes à l'emploi
+echo "<pre>"; print_r(get_class_methods($pdo)); echo "</pre>";
+
+//je selectionne dns ma BDD à la table vehicule, ttes ls valeurs du vehicule dnt le title sera egal à renault 
+$afficheVehicules = $pdo->query("SELECT * FROM vehicule WHERE title = 'Renault' ");
+
+//le var_dump de afficheVehicules m indique que cst 1 objet de la class PDOStatement.
+//PDOStatement est directement liée à la class PDO. Elle intervient dès que la requete SELECT est entamée
+echo "<pre>"; var_dump($afficheVehicules); echo "</pre>";
 
 
 
-
-
-
+?>
 
 <?php require_once('inc/footer.inc.php');?>
