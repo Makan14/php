@@ -869,6 +869,9 @@ $pdo = new PDO('mysql:host=localhost;dbname=voiture', 'root', '', array(
 //get_class_methods me permet de visualiser ls diffs méthodes prédéfinies de ma class PDO, qui seront utilisables, pretes à l'emploi
 echo "<pre>"; print_r(get_class_methods($pdo)); echo "</pre>";
 
+//---------------------------------
+//method query (select)
+
 //je selectionne dns ma BDD à la table vehicule, ttes ls valeurs du vehicule dnt le title sera egal à renault 
 $afficheVehicules = $pdo->query("SELECT * FROM vehicule WHERE title = 'Renault' ");
 
@@ -876,8 +879,134 @@ $afficheVehicules = $pdo->query("SELECT * FROM vehicule WHERE title = 'Renault' 
 //PDOStatement est directement liée à la class PDO. Elle intervient dès que la requete SELECT est entamée
 echo "<pre>"; var_dump($afficheVehicules); echo "</pre>";
 
+//mm si cst possible de faire ds INSERT INTO, UPDATE OU DELETE avc la methode Query il faut l utiliser seulement pr le SELECT.
+//si je dois modif ma BDD (avc 1 insertion modif ou supp, il faudra faire 1 requete préparé avc pepare())
 
+//---------------------------------
+//methode fetch()
+//$afficheVehicules est la variables est la variable à laquelle on a affecté le résultat de la requete query (elle stocke ls infos de ts ls véhicules concernés par la selection)
+//la méthode fetch va a présent search en BDD ts ls véhicules concernés par la selection, et affecter ce résultat dns la variable $vehicule
+//PDO::FETCH_ASSOC permet de cibler la colonne par sn nom (FETCH_BOTH permet de faire la search sur le nom et l indice de la colonne FETCH_NUM permet de faire 7 recherche seulement sur l indice de la colonne)
+$vehicule = $afficheVehicules->fetch(PDO::FETCH_ASSOC);
+//print_r pr afficher ls résultats (de manière nn conventielle) stockés dns $vehicule
+echo "<pre>"; print_r($vehicule); echo "</pre>";
+
+//le résultat du fetch étant stocké dns $véhicule cst mtn cette variable que je vais utiliser pr appeler ls valeurs qui m interessent
+//je les cible en crochetant à l indice qui m interesse
+//dns la syntaxe ci desss volontairement je n ai ps concaténé $vehicule[price] comme pr ls autres indices
+//cst pr rappeler que entre double ("") une variable sera interprétée par contre je devrai supp ls simples quotes qui l entourent l indice à l intérieur ds crochets  
+echo "<p>Le véhicule " . $vehicule['title'] . " est disponible dns la ville de " . $vehicule['city'] . " au prix de " . $vehicule['price'] . " €/j</p>";
 
 ?>
+
+
+<table class="table">
+    <!-- je fais 1 nvlle requete de selection 7 fois pr recup ts ls véhicules en BDD pas seulement ceux de la marque renault  -->
+    <!-- pr cela j utilise la fonction prédéfinie columnCount. Ma boucle for() s executera tant que je trouve 1 nvlle colonne -->
+<?php $afficheVoiture = $pdo->query("SELECT * FROM vehicule") ?>
+    <thead>
+        <tr>
+            <!-- columnCount = nombre de colonne -->
+            <!-- getColumnMeta = recup la méta donnée -->
+            <?php for($i = 0; $i < $afficheVoiture->columnCount(); $i++):
+            //une fois ce nombre détérminé je vais recup ttes ls metas contenues dns mn tableau en BDD et j affecte ce résultat à $colonne 
+               $colonne = $afficheVoiture->getColumnMeta($i) ?>
+            <?php echo "<pre>"; print_r($colonne); echo "</pre>"; ?>
+              <!-- la meta qui m interesse cst name cst pr cela que cst celle là que je crochète(je le voit dns le print_r() du dessus, a chaque name correspond le nom de ma colonne) elle va me permettre de recup ttes ls valeurs ls noms de mes colonnes  -->
+            <th><?= $colonne['name'] ?></th>
+            <?php endfor ?>
+        </tr>
+    </thead>
+    <tbody>
+        <!-- cette while va permettre de recup chaque véhicule chaque ligne qu elle va rencontrer en BDD -->
+        <!-- je stocke dns $voiture tt ce que fetch parametré avc FETCH_ASSOC va trouver comme information selectionnée -->
+        <?php while($voiture = $afficheVoiture->fetch(PDO::FETCH_ASSOC)): ?>
+        <tr>
+            <!-- cette foreach recup ttes ls valeurs qu elle va rencontrer dns chaque ligne  du tableau (véhicule) -->
+            <!-- je donne 1 alias à $voiture cst $key (key comme indice). Et je fais correspondre à $key (avc =>) la variable $value 
+            Est cst 7 $value que je positionne dns le <td> pr afficher ls valeurs trouvée en BDD 
+            -->
+            <?php foreach($voiture as $key => $value): ?>
+                <!-- 7 condition if() va donner 1 affichage diff pr ls prix -->
+                <!-- si l indice est == à price alors je veux que le signe € s affiche à droite de la valeur recup (le prix) -->
+                <?php if($key == 'price'): ?>
+            <td><?= $value ?>€</td>
+                <?php else: ?>
+                    <!--  -->
+                    <td><?= $value ?></td>
+            <?php endif ?>
+            <?php endforeach ?>
+        </tr>
+        <?php endwhile; ?>  
+    </tbody>
+</table>
+
+<!-- bouton vers dialogue.php -->
+<a href="dialogue/dialogue.php"><button type="submit" class="btn btn-primary">vers la page dialogue</button></a> 
+
+
+<!-- ----------------------------------CHAP 17 Sécurité -->
+<!-- la vérif ds champs, leur controle, ne peut etre fait en FRONT/html, comme ci-dessous avc le max-lenght et le pattern. Il suffira au hacker d ouvrir l inspecteur le supp dns la partie de droite et cet obstacle sera levé -->
+<form class="my-3">
+    <div class="mb-3">
+        <label for="pseudo" class="form-label">Pseudo</label>
+        <input type="text" title="Les lettres de l alphabet, minuscules comme majuscules snt autorisés ainsi que les chiffres. Les carctères spéciaux ; _ et - snt autorisés. Tt autre caractère sera refusé" class="form-control" id="pseudo" name="pseudo" placeholder="Votre Pseudo" maxlenght="20" pattern="[a-zA-Z0-9._-]{3,20}"> 
+    </div>
+
+    <button type="submit" class="btn btn-primary">Envoyer</button>
+</form>
+
+<!-- vérif de champs en traitement PHP -->
+<!-- vs trouverez ds vérif de champs dns le projet locations de voitures ou alors dns dialogue.php référez vous-y celles déjà codées -->
+
+<!-- vérif du champs email nn travaillé dns ls 2 projets juste cités -->
+
+<?php 
+//la fonction filter_var en lui donnant en 1er parametre le champs concerné puis en second parametre FILTER_VALIDATE_EMAIL, va vérifier si l input de l utilisateur correpond à 1 format d adresse email ou non
+if (!isset($_POST['email']) || !filter_var($_POST['email'], FILTER_VALIDATE_EMAIL)) {
+    // $erreur .= "<p>Erreur format email</p>";
+}
+?>
+
+<!-- Requetes préparées
+Elles permettent 1 meilleure sécurisation de l envoi de données vers la BDD 
+Il faut la priviliégier à la méthode QUERY (ne garder celle ci que pr 1 requete de selection) ns avons fait plsrs requetes préparées dns le projet location de voiture et dialogue.php 
+Référez-vous y -->
+
+<a href="securite/connexion.php"><button type="submit" class="btn btn-primary my-3">vers la page connexion (sécurité)</button></a> 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- cas particulier pr afficher ds valeurs au format diff -->
+<!-- si je dois afficher 1 photo ou afficher 1 prix je vais devoir faire ds conditions pr ls diff cas de figure -->
+<!-- <?php while($produit = $afficheProduit->fetch(PDO::FETCH_ASSOC)): ?>
+<tr>
+<?php foreach($voiture as $key => $value): ?>
+        comme au dessus je veux 1 affichage diff si le nom de la colonne est == à photo
+        <?php if ($key == 'photo'): ?>
+            dns ce cas je ne veux pas recup la valeur dns BDD (cst 1 chaine de caracteres contenant le nom du fichier photo)
+            je veux que cette valeur soit renseignée dns l attribut src de ma balise pr servir de chemin pour afficher ma photo (avec le nom du dossier /img/ dans laquelle elle est, qui la précède)
+            <td> <img src="img/<?= $value ?>"></td>
+        <?php elseif ($key == 'prix'): ?>
+            <td><?= $value ?>€</td>
+        <?php else: ?>
+        <?php endif ?>
+        <td><?= $value ?></td>
+    <?php endforeach ?>
+</tr>
+<?php endwhile; ?>   -->
 
 <?php require_once('inc/footer.inc.php');?>
